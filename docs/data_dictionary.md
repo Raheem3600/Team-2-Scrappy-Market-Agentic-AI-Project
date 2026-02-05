@@ -116,3 +116,34 @@ The dictionary supports explainability for Agentic AI–driven investigation wor
 ## General Notes
 - All data is synthetic and designed for investigation workflows, not real analytics.
 - Phase 1 focuses on explainability and SQL generation, not business accuracy.
+
+## How Agentic AI Uses This Data (Phase 1)
+
+The Agentic AI system uses this schema and data dictionary to translate natural-language business questions into structured investigation workflows.
+
+At a high level, the agent follows these steps:
+
+1. **Identify the investigation intent**  
+   Examples include Top-N ranking, region comparison, promotion uplift, growth analysis, or trend analysis.
+
+2. **Select relevant entities and metrics**  
+   - Uses **Sales** as the primary evidence table.
+   - Uses **Products** and **Stores** to define the analysis scope.
+   - Uses **Dates** to resolve time windows such as “last month” or “Q2”.
+
+3. **Resolve promotional context (if applicable)**  
+   - Uses **Promotions** to determine campaign windows.
+   - Uses **PromotionProducts** to identify which products were affected.
+   - Compares sales before and during promotion periods.
+
+4. **Generate investigation SQL queries**  
+   - Constructs SQL queries using joins across Sales, Dates, Products, and Stores.
+   - Applies grouping, aggregation, and ordering based on investigation intent.
+
+5. **Provide explainable reasoning**  
+   - Explains which tables were used and why.
+   - Describes how time windows, filters, and comparisons were applied.
+   - Uses **Inventory snapshots** when needed to provide context for unusual sales behavior.
+
+This design enables the agent to demonstrate *how* an investigation would be performed, rather than producing definitive business conclusions, which aligns with the Phase 1 MVP scope.
+
