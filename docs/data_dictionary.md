@@ -132,6 +132,131 @@ The dictionary supports explainability for Agentic AI–driven investigation wor
 
 ---
 
+# Views (Agent Investigation Surfaces)
+
+The following views provide semantic, agent-friendly surfaces over the base tables.  
+They simplify SQL generation, improve explainability, and reduce repetitive join logic.
+
+---
+
+## `vw_sales_enriched`
+
+**Purpose:**  
+Primary analytical surface for most investigation queries.  
+Pre-joins `Sales`, `Dates`, `Stores`, and `Products` into a unified evidence view.
+
+**Used For:**
+- Top-N product ranking  
+- Region comparison  
+- Growth analysis  
+- Trend and seasonality investigations  
+
+**Design Rationale:**  
+Eliminates repetitive join logic and ensures readable, explainable SQL generation by the Agentic AI system.
+
+**Source Tables:**  
+`Sales`, `Dates`, `Stores`, `Products`
+
+---
+
+## `vw_sales_daily_product`
+
+**Purpose:**  
+Pre-aggregated daily product-level sales.
+
+**Used For:**
+- “Top products last month”  
+- Category trend analysis  
+- Growth over time calculations  
+
+**Design Rationale:**  
+Reduces `GROUP BY` complexity in agent-generated SQL.
+
+**Source Tables:**  
+`Sales`, `Dates`, `Products`
+
+---
+
+## `vw_sales_daily_store`
+
+**Purpose:**  
+Pre-aggregated daily store-level sales.
+
+**Used For:**
+- Store comparison  
+- Region performance evaluation  
+- Daily dashboard visualizations  
+
+**Source Tables:**  
+`Sales`, `Dates`, `Stores`
+
+---
+
+## `vw_promotions_enriched`
+
+**Purpose:**  
+Promotion metadata with resolved date ranges and product mappings.
+
+**Used For:**
+- Promotion window identification  
+- Product inclusion checks  
+- Campaign metadata lookup  
+
+**Design Rationale:**  
+Converts `StartDateKey` and `EndDateKey` into human-readable dates to simplify time-based filtering.
+
+**Source Tables:**  
+`Promotions`, `Dates`, `PromotionProducts`
+
+---
+
+## `vw_promo_sales_fact`
+
+**Purpose:**  
+Unified promotion-aware sales surface combining sales activity and promotion windows.
+
+**Used For:**
+- Promotion uplift analysis  
+- Comparing pre- and during-promotion performance  
+- Campaign effectiveness investigations  
+
+**Design Rationale:**  
+Pre-resolves promotion window logic so the agent avoids complex temporal joins.
+
+**Source Views:**  
+`vw_sales_enriched`, `vw_promotions_enriched`
+
+---
+
+## `vw_low_stock`
+
+**Purpose:**  
+Inventory snapshot surface with reorder threshold logic.
+
+**Used For:**
+- Low stock detection  
+- Reorder threshold analysis  
+- Explaining sales behavior impacted by inventory constraints  
+
+**Source Tables:**  
+`Inventory`, `Dates`, `Stores`, `Products`
+
+---
+
+# Physical Design Notes (Performance Layer)
+
+To support investigation workloads, non-clustered indexes are applied to:
+
+- `Sales(DateKey, StoreID, ProductID, WasOnPromotion)`
+- `Inventory(StoreID, ProductID, DateKey)`
+- `Promotions(StartDateKey, EndDateKey)`
+
+These indexes optimize filtering, joins, and aggregation performance for agent-generated SQL queries.
+
+Indexes are implementation-level optimizations and do not alter logical data meaning.
+
+---
+
 ## General Notes
 - All data is synthetic and designed for investigation workflows, not real analytics.
 - Phase 1 focuses on explainability and SQL generation, not business accuracy.
