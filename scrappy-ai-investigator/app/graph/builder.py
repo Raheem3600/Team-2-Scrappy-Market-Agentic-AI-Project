@@ -1,6 +1,13 @@
 from langgraph.graph import StateGraph, END
 from app.graph.state import InvestigationState
 from app.graph.nodes import intent_node, planner_node, response_node, select_hypothesis_node, evaluate_node
+from app.agents.intent_agent import IntentAgent
+from app.agents.planner_agent import PlannerAgent
+from app.agents.response_agent import ResponseAgent
+
+intent_agent = IntentAgent()
+planner_agent = PlannerAgent()
+response_agent = ResponseAgent()
 
 def route_after_planner(state: InvestigationState):
     if len(state.hypotheses) == 0:
@@ -23,11 +30,11 @@ def build_graph():
     builder = StateGraph(InvestigationState)
 
     # Add nodes
-    builder.add_node("intent", intent_node)
-    builder.add_node("planner", planner_node)
+    builder.add_node("intent", intent_agent)
+    builder.add_node("planner", planner_agent)
     builder.add_node("select_hypothesis", select_hypothesis_node)
     builder.add_node("evaluate", evaluate_node)
-    builder.add_node("response", response_node)
+    builder.add_node("response", response_agent)
 
     # Entry
     builder.set_entry_point("intent")
