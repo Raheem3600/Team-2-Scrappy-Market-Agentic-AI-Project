@@ -113,6 +113,25 @@ The dictionary supports explainability for Agentic AI–driven investigation wor
 
 ---
 
+## USERS
+**Purpose:** Stores application user accounts to support authentication and role-based access (minimal usage in Phase 1).
+
+| Column | Description |
+|--------|-------------|
+| UserID | Unique identifier for a system user |
+| Username | Unique login name for the user |
+| Email | User email address (unique) |
+| PasswordHash | Secure hashed representation of the user’s password |
+| Role | Role designation used for access control (e.g., Admin, Analyst) |
+| CreatedAt | Timestamp when the user account was created |
+| IsActive | Indicates whether the user account is active |
+
+**Notes:**
+- Passwords are never stored in plain text; only hashed values are stored.
+- In Phase 1, USERS is independent of the retail investigation schema.
+
+---
+
 ## General Notes
 - All data is synthetic and designed for investigation workflows, not real analytics.
 - Phase 1 focuses on explainability and SQL generation, not business accuracy.

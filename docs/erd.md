@@ -79,3 +79,13 @@ erDiagram
     int OnHandQuantity
     int ReorderPoint
   }
+
+  USERS {
+    int UserID PK
+    string Username
+    string Email
+    string PasswordHash
+    string Role
+    datetime CreatedAt
+    boolean IsActive
+  }

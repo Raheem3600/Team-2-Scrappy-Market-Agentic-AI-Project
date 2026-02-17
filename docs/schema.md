@@ -200,6 +200,30 @@ Inventory snapshots to provide stock context during investigations
 
 ---
 
+### 2.8 Users
+**Purpose:**  
+Stores application user accounts to support authentication and role-based access  
+(minimal usage in Phase 1).
+
+**Columns**
+- `UserID` INT **PK** IDENTITY(1,1)
+- `Username` NVARCHAR(100) NOT NULL  
+  **UNIQUE**
+- `Email` NVARCHAR(150) NOT NULL  
+  **UNIQUE**
+- `PasswordHash` NVARCHAR(255) NOT NULL
+- `Role` NVARCHAR(50) NOT NULL
+- `CreatedAt` DATETIME NOT NULL
+- `IsActive` BIT NOT NULL
+
+**Design notes**
+- Passwords are stored as **hashed values only**.
+- This table is independent of retail investigation tables in Phase 1.
+- Role can be used by the API or UI layer to manage access control.
+
+
+---
+
 ## 3) Key Investigation Patterns Supported (Examples)
 
 - **Top-N Products**  
