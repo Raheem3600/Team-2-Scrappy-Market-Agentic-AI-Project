@@ -12,10 +12,10 @@ class InvestigationStatus(str, Enum):
 
 
 class IntentModel(BaseModel):
-    metric: Optional[str] = None
-    time_range: Optional[str] = None
+    metric: str
+    time_range: str
     comparison: Optional[str] = None
-    filters: Optional[Dict[str, Any]] = None
+    filters: Optional[Dict[str, Any]] = {}
 
 
 class HypothesisModel(BaseModel):
@@ -61,3 +61,4 @@ class InvestigationState(BaseModel):
     def add_evidence(self, evidence: EvidenceModel):
         self.evidence.append(evidence)
         self.update_timestamp()
+
