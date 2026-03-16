@@ -15,14 +15,14 @@ Used for:
 - Docker container initialization
 */
 
-:r .\00_create_database.sql
-:r .\00_reset.sql
-:r .\01_schema.sql
-:r .\02_indexes.sql
-:r .\03_views.sql
-:r .\04_seed_dimensions.sql
-:r .\05_seed_promotions.sql
-:r .\06_seed_sales.sql
--- :r .\07_canonical_queries.sql   -- optional (read-only queries)
-:r .\99_verify.sql
+:r /db/00_create_database.sql
+:r /db/00_reset.sql
+:r /db/01_schema.sql
+:r /db/02_indexes.sql
+:r /db/03_views.sql
+:r /db/04_seed_dimensions.sql
+:r /db/05_seed_promotions.sql
+:r /db/06_seed_sales.sql
+-- :r /db/07_canonical_queries.sql
+:r /db/99_verify.sql
 GO
