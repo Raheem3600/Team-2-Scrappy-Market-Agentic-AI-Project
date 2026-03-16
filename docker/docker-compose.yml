@@ -8,6 +8,6 @@ services:
     ports:
       - "1433:1433"
     volumes:
-      - ./db:/db
+      - ../db:/db
       - ./init-db.sh:/init-db.sh
     command: /bin/bash -c "/init-db.sh & /opt/mssql/bin/sqlservr"
