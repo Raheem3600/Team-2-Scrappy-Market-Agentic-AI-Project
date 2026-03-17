@@ -1,7 +1,11 @@
+name: scrappymarket
 services:
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: scrappymarket_db
+    hostname: scrappymarket-db
+    restart: unless-stopped
+    
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "IT7993!Scrappy"
