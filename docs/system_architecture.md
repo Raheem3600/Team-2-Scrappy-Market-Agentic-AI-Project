@@ -59,6 +59,8 @@ DB --> Views
 DB --> Response
 Response --> UI
 
+```
+
 ---
 
 ## Frontend Layer (Streamlit UI)
@@ -181,6 +183,7 @@ FROM vw_sales_enriched
 WHERE region = 'Mountain'
 GROUP BY region
 
+```
 The query is then sent to the API layer for execution.
 ---
 
