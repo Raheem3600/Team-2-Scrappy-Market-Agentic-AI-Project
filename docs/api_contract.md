@@ -2,60 +2,79 @@
 
 ## Purpose
 
-This document defines the backend API contract used by the LangGraph agent layer to interact with the ScrappyMarket SQL Server database.
+This document defines the backend API contract for the Scrappy Market
+FastAPI service.
 
-The API acts as the controlled interface between agents and the data layer. Agents **do not connect directly to SQL Server**.
+The API provides a **controlled service layer between the orchestration
+/ agent layer and the ScrappyMarket SQL Server database**. Agents and UI
+components do **not connect directly to SQL Server**.
 
----
+The backend exposes metadata and safe query endpoints over **approved
+analytical views**.
+
+------------------------------------------------------------------------
 
 # Base URL
 
-For local development:http://localhost:8000
+Local development:
 
+`http://localhost:8000`
 
-For Docker deployment, the base URL may be updated through environment variables.
+For Docker deployment, the base URL will be configured through
+environment variables or service discovery.
 
----
+------------------------------------------------------------------------
 
 # Current Endpoints
 
 ## 1. Health Check
-GET /health
+
+`GET /health`
 
 ### Purpose
+
 Verifies that the FastAPI service is running.
 
-### Response
+### Example Response
 
-```json
+``` json
 {
   "status": "ok"
 }
-
 ```
+
+------------------------------------------------------------------------
+
 ## 2. Database Connectivity Check
-GET /db/ping
+
+`GET /db/ping`
 
 ### Purpose
+
 Verifies that the FastAPI backend can connect to SQL Server.
 
-### Response
-```json
+### Example Response
+
+``` json
 {
   "db_response": 1
 }
 ```
 
+------------------------------------------------------------------------
+
 ## 3. Get Available Analytical Views
-GET /meta/views
+
+`GET /meta/views`
 
 ### Purpose
 
-Returns the list of SQL views available for agent-based investigation.
+Returns the list of **approved analytical SQL views** that can be
+queried by the API.
 
 ### Response
 
-```json
+``` json
 {
   "views": [
     "vw_low_stock",
@@ -72,18 +91,23 @@ Returns the list of SQL views available for agent-based investigation.
 
 Lineage / Context Agent
 
+------------------------------------------------------------------------
+
 ## 4. Get Columns for a View
-GET /meta/columns/{view_name}
+
+`GET /meta/columns/{view_name}`
 
 ### Purpose
 
 Returns the list of columns available in a selected analytical view.
 
 ### Example Request
-GET /meta/columns/vw_sales_enriched
+
+`GET /meta/columns/vw_sales_enriched`
 
 ### Response
-```json
+
+``` json
 {
   "view": "vw_sales_enriched",
   "columns": [
@@ -117,157 +141,203 @@ GET /meta/columns/vw_sales_enriched
   ]
 }
 ```
+
+### Error Behavior
+
+-   Returns `404` or `400` if the view name is invalid or not approved.
+
 ### Used by
 
-Lineage / Context Agent
-
+Lineage / Context Agent\
 Query Builder Agent
 
-## 5. Execute SQL Query
+------------------------------------------------------------------------
 
-POST /query/execute
-Content-Type: application/json
+# 5. Execute Safe View Query
+
+`POST /query/execute`\
+Content-Type: `application/json`
 
 ### Purpose
-Receives a validated SQL SELECT query, executes it against SQL Server, and returns results in structured JSON format.
 
-### Request Body
+Executes a **safe, validated query** against an approved analytical view
+and returns structured JSON results.
 
-```json
+The endpoint **does not accept raw SQL** from clients or agents.
+
+Agents should use metadata endpoints (`/meta/views`,
+`/meta/columns/{view_name}`) before constructing query requests when
+schema information is uncertain.
+
+------------------------------------------------------------------------
+
+## Request Body
+
+``` json
 {
-  "sql": "SELECT TOP 5 ProductName, SalesAmount, Region FROM vw_sales_enriched"
+  "view_name": "vw_sales_daily_store",
+  "filters": {
+    "StoreID": 1
+  },
+  "limit": 20
 }
-
 ```
 
-### Example Response
-```json
+------------------------------------------------------------------------
+
+## Request Fields
+
+-   **view_name** --- name of an approved analytical view\
+-   **filters** --- optional key/value filters where keys must be valid
+    columns in the selected view\
+-   **limit** --- maximum number of rows to return
+
+------------------------------------------------------------------------
+
+## Example Response
+
+``` json
 {
-  "row_count": 5,
+  "success": true,
+  "row_count": 20,
   "results": [
     {
-      "ProductName": "Bananas",
-      "SalesAmount": 123.45,
-      "Region": "Southeast"
+      "DateKey": 20250801,
+      "Date": "2025-08-01",
+      "StoreID": 1,
+      "Region": "Southeast",
+      "City": "Atlanta",
+      "UnitsSold": 17,
+      "SalesAmount": 110.13,
+      "CostAmount": 79.15,
+      "MarginAmount": 30.98
     }
   ]
 }
 ```
----
-### Current Validation Rules
 
-Only SELECT queries are allowed
+------------------------------------------------------------------------
 
-Dangerous SQL keywords are blocked:
-INSERT
-UPDATE
-DELETE
-DROP
-ALTER
-TRUNCATE
-CREATE
----
+## Validation Rules
+
+The backend enforces the following rules:
+
+-   Only approved analytical views can be queried
+-   Clients cannot submit raw SQL
+-   Filter columns must exist in the selected view
+-   Filter values are passed to SQL Server using **parameterized
+    queries**
+-   Row limits are validated before query execution
+
+------------------------------------------------------------------------
 
 ### Used by
 
-Query Builder Agent
-
+Query Builder Agent\
 Response Agent
 
----
+------------------------------------------------------------------------
 
-## Intended Agent Usage
-### Lineage / Context Agent
+# Intended Agent Usage
+
+## Lineage / Context Agent
 
 The Lineage / Context Agent should call:
 
-GET /meta/views
-GET /meta/columns/{view_name}
+`GET /meta/views`\
+`GET /meta/columns/{view_name}`
 
 This allows the agent to dynamically understand:
 
--what analytical views exist
+-   what analytical views exist
+-   what columns are available
+-   which view best supports the investigation
 
--what columns are available
+------------------------------------------------------------------------
 
--which view best supports the investigation
----
-
-### Query Builder Agent
+## Query Builder Agent
 
 The Query Builder Agent should:
 
--use metadata from the Lineage Agent
+-   use metadata from the Lineage / Context Agent
+-   select an appropriate approved view
+-   identify valid filter columns
+-   send a structured request to:
 
--generate a SQL SELECT query
+`POST /query/execute`
 
--send that query to:
+The Query Builder Agent **does not generate or execute raw SQL
+directly**.
 
-POST /query/execute
+------------------------------------------------------------------------
 
-The Query Builder Agent does not execute SQL directly.
----
-
-### Response Agent
+## Response Agent
 
 The Response Agent consumes the JSON returned by:
 
-POST /query/execute
+`POST /query/execute`
 
 and converts it into:
 
--natural language explanation
+-   natural language explanation
+-   investigation reasoning
+-   confidence score
+-   business-friendly summary for the Streamlit UI
 
--investigation reasoning
+------------------------------------------------------------------------
 
--confidence score
+# Example End-to-End Flow
 
--optional SQL display for the Streamlit UI
----
+User (Streamlit UI) │ ▼ Intent Agent │ ▼ Investigation Planner Agent │ ▼
+Lineage / Context Agent │ ├── GET /meta/views └── GET
+/meta/columns/{view_name} │ ▼ Query Builder Agent │ └── POST
+/query/execute │ ▼ FastAPI Backend │ ▼ SQL Server │ ▼ JSON Results │ ▼
+Response Agent │ ▼ Streamlit UI
 
-## Example End-to-End Flow
+In this flow, the query step uses a **structured API request
+(`view_name`, `filters`, `limit`) rather than raw SQL text.**
 
-User (Streamlit UI)
-        │
-        ▼
-Intent Agent
-        │
-        ▼
-Investigation Planner Agent
-        │
-        ▼
-Lineage / Context Agent
-        │
-        ├── GET /meta/views
-        └── GET /meta/columns/{view_name}
-        │
-        ▼
-Query Builder Agent
-        │
-        └── POST /query/execute
-        │
-        ▼
-FastAPI Backend
-        │
-        ▼
-SQL Server
-        │
-        ▼
-JSON Results
-        │
-        ▼
-Response Agent
-        │
-        ▼
-Streamlit UI
+------------------------------------------------------------------------
 
----
-## Notes for Integration
+# Notes for Integration
 
--Agents should query analytical views instead of raw tables.
+-   Agents should query **approved analytical views** instead of raw
+    tables
+-   The API is the **only approved interface between agents and SQL
+    Server**
+-   The backend **does not accept raw SQL** from agents or UI clients
+-   Query execution is restricted to **approved views and validated
+    filter columns**
+-   Future Docker deployment will configure API URLs via environment
+    variables
 
--The API is the only approved interface between agents and SQL Server.
+------------------------------------------------------------------------
 
--The backend ensures safe SQL execution.
+# Approved Views
 
--Future Docker deployment will configure API URLs via environment variables.
+The following analytical views are currently exposed through the API:
+
+-   `vw_low_stock`
+-   `vw_promo_sales_fact`
+-   `vw_promotions_enriched`
+-   `vw_sales_daily_product`
+-   `vw_sales_daily_store`
+-   `vw_sales_enriched`
+
+------------------------------------------------------------------------
+
+# Security Design
+
+The backend enforces multiple safeguards:
+
+-   Only **approved analytical views** are exposed
+-   **Raw SQL execution is not permitted**
+-   Column filters are **validated against view metadata**
+-   Query parameters are executed using **parameterized SQL**
+-   Row limits prevent large uncontrolled queries
+
+This design prevents:
+
+-   SQL injection
+-   unauthorized table access
+-   uncontrolled query execution
