@@ -21,6 +21,7 @@ class IntentModel(BaseModel):
 class HypothesisModel(BaseModel):
     name: str
     priority: int
+    description: Optional[str] = None
     tested: bool = False
     score: Optional[float] = None
 
@@ -50,6 +51,8 @@ class InvestigationState(BaseModel):
 
     # ---- Control Flags ----
     current_hypothesis_index: int = 0
+
+    current_data_context: Optional[Dict[str, Any]] = None
 
     def update_timestamp(self):
         self.updated_at = datetime.utcnow()

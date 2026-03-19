@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     initial_state = InvestigationState(
         investigation_id=str(uuid.uuid4()),
-        question="Why are sales down?"
+        question="how many orders yesterday ?"
     )
 
     result = graph.invoke(initial_state)

@@ -2,7 +2,18 @@ from app.agents.base import BaseAgent
 from app.graph.state import IntentModel, InvestigationStatus
 from app.config.llm import get_llm
 from pydantic import ValidationError
+from app.domain.metric_mapper import canonicalize_metric
 import json
+import re
+
+def safe_json_parse(text: str):
+    try:
+        return json.loads(text)
+    except:
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if match:
+            return json.loads(match.group())
+        raise Exception("Invalid JSON output")
 
 
 class IntentAgent(BaseAgent):
@@ -12,11 +23,17 @@ class IntentAgent(BaseAgent):
         llm = get_llm()
 
         system_prompt = """
-You are a business analytics intent parser.
+You are a strict JSON generator.
 
-Extract structured intent from the user's question.
+Extract structured analytics intent.
 
-Return ONLY valid JSON with:
+Return ONLY valid JSON.
+
+Do NOT explain.
+Do NOT add text.
+Do NOT wrap in markdown.
+
+Format:
 {
   "metric": string,
   "time_range": string,
@@ -24,11 +41,25 @@ Return ONLY valid JSON with:
   "filters": object
 }
 
-Rules:
-- metric must be canonical (e.g., net_sales, revenue, orders)
-- time_range must be normalized (e.g., last_7_days, yesterday)
-- comparison can be previous_period or null
-- filters default to empty object
+Examples:
+
+Q: Why did sales drop last week?
+A:
+{
+  "metric": "net_sales",
+  "time_range": "last_7_days",
+  "comparison": "previous_period",
+  "filters": {}
+}
+
+Q: Show revenue yesterday
+A:
+{
+  "metric": "revenue",
+  "time_range": "yesterday",
+  "comparison": null,
+  "filters": {}
+}
 """
 
         user_prompt = f"""
@@ -42,11 +73,10 @@ User question:
         ])
 
         try:
-            parsed = json.loads(response.content)
-            print(parsed)
+            parsed = safe_json_parse(response.content)
+            parsed["metric"] = canonicalize_metric(parsed["metric"])
             intent = IntentModel(**parsed)
-            print(intent)
-        except (json.JSONDecodeError, ValidationError) as e:
+        except (ValidationError, Exception) as e:
             raise Exception(f"Intent parsing failed: {str(e)}")
 
         state.intent = intent

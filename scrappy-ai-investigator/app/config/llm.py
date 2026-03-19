@@ -1,12 +1,16 @@
 import os
-from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
+#from langchain_openai import ChatOpenAI
+#from dotenv import load_dotenv
 
-load_dotenv()
+
+#load_dotenv()
+
+
+from langchain_community.chat_models import ChatOllama
+
 
 def get_llm():
-    return ChatOpenAI(
-        model="gpt-4o-mini",
-        temperature=0,
-        api_key=os.getenv("OPENAI_API_KEY")
+    return ChatOllama(
+        model="llama3",
+        temperature=0
     )
