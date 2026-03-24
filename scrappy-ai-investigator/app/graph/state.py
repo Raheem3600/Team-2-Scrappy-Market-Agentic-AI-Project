@@ -29,7 +29,7 @@ class HypothesisModel(BaseModel):
 class EvidenceModel(BaseModel):
     hypothesis: str
     summary: str
-    raw_data: Optional[Dict[str, Any]] = None
+    raw_data: List[Dict[str, Any]]
 
 
 class InvestigationState(BaseModel):

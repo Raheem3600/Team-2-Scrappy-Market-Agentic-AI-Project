@@ -18,5 +18,16 @@ LINEAGE_REGISTRY = {
         "view": "vw_low_stock",
         "group_by": ["Date", "StoreID", "ProductID"],
         "metrics": ["OnHandQuantity", "IsBelowReorderPoint"]
-    }
+    },
+    "store_order_decline": {
+        "view": "vw_sales_daily_store",
+        "group_by": ["Date", "Region"],
+        "metrics": ["UnitsSold"]  # orders proxy
+    },
+
+    "product_demand_drop": {
+        "view": "vw_sales_daily_product",
+        "group_by": ["Date", "Category"],
+        "metrics": ["UnitsSold"]
+    },
 }
