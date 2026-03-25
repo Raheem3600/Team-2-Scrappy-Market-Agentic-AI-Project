@@ -1,6 +1,18 @@
 import streamlit as st
 import random
 import time
+from langchain_ollama.llms import OllamaLLM
+from langchain_core.prompts import ChatPromptTemplate
+from ..scrappy-ai-investigator.app.agents.intent_agent import system_prompt
+
+
+template = system_prompt
+prompt = ChatPromptTemplate.from_template(template)
+
+#Load the local Llama3.2 model
+model = OllamaLLM(model="llama3.2")
+chain = prompt | model
+
 
 st.title("Scrappy Market AI Assistant")
 
@@ -14,22 +26,16 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Accept user input
-if prompt := st.chat_input("How can I help you?"):
+if user_input := st.chat_input("How can I help you?"):
     # Display user message in chat message container
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(user_input)
     # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.session_state.messages.append({"role": "user", "content": user_input})
 
 # Streamed response emulator
 def response_generator():
-    response = random.choice(
-        [
-            "Hello there! How can I assist you today?",
-            "Hi, human! Is there anything I can help you with?",
-            "Do you need help?",
-        ]
-    )
+    response = chain.invoke({"question": user_input})
     for word in response.split():
         yield word + " "
         time.sleep(0.05)
