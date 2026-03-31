@@ -1,47 +1,107 @@
 import streamlit as st
-import random
+import requests
 import time
-from langchain_ollama.llms import OllamaLLM
-from langchain_core.prompts import ChatPromptTemplate
-from ..scrappy-ai-investigator.app.agents.intent_agent import system_prompt
 
+API_URL = "http://localhost:9000/investigate"
 
-template = system_prompt
-prompt = ChatPromptTemplate.from_template(template)
+# -------------------------------
+# PAGE CONFIG
+# -------------------------------
+st.set_page_config(
+    page_title="Scrappy Market AI",
+    layout="wide"
+)
 
-#Load the local Llama3.2 model
-model = OllamaLLM(model="llama3.2")
-chain = prompt | model
+# -------------------------------
+# HEADER (like your screenshot)
+# -------------------------------
+st.markdown("""
+<div style="
+    background-color:#F5E6D3;
+    padding:15px;
+    border-radius:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+">
+    <div style="font-size:22px; font-weight:bold; color:#E67E22;">
+        🤖 Scrappy Market Agentic AI Assistant
+    </div>
+    <div>
+        <span style="margin-right:15px;">Welcome, Raheem!</span>
+        <button style="
+            background:#fff;
+            border:1px solid #ccc;
+            padding:5px 10px;
+            border-radius:8px;
+        ">Sign Out</button>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
+st.markdown("<br>", unsafe_allow_html=True)
 
-st.title("Scrappy Market AI Assistant")
-
-# Initialize chat history
+# -------------------------------
+# INIT STATE
+# -------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat messages from history on app rerun
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# -------------------------------
+# CHAT DISPLAY
+# -------------------------------
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# Accept user input
-if user_input := st.chat_input("How can I help you?"):
-    # Display user message in chat message container
+# -------------------------------
+# INPUT
+# -------------------------------
+user_input = st.chat_input("How can I help you?")
+
+# -------------------------------
+# HANDLE USER INPUT
+# -------------------------------
+if user_input:
+    # Show user message
     with st.chat_message("user"):
         st.markdown(user_input)
-    # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": user_input})
 
-# Streamed response emulator
-def response_generator():
-    response = chain.invoke({"question": user_input})
-    for word in response.split():
-        yield word + " "
-        time.sleep(0.05)
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_input
+    })
 
-# Display assistant response in chat message container
-with st.chat_message("assistant"):
-    response = st.write_stream(response_generator())
-# Add assistant response to chat history
-st.session_state.messages.append({"role": "assistant", "content": response})
+    # Call Orchestrator API
+    with st.spinner("Analyzing..."):
+        try:
+            res = requests.post(
+                API_URL,
+                json={"question": user_input},
+                timeout=60
+            )
+            data = res.json()
+            answer = data.get("answer", "No response")
+            confidence = data.get("confidence", 0)
+
+        except Exception as e:
+            answer = f"Error: {str(e)}"
+            confidence = 0
+
+    # -------------------------------
+    # STREAM RESPONSE (typing effect)
+    # -------------------------------
+    def stream_response(text):
+        for word in text.split():
+            yield word + " "
+            time.sleep(0.03)
+
+    with st.chat_message("assistant"):
+        response = st.write_stream(stream_response(answer))
+        st.caption(f"Confidence: {round(confidence, 2)}")
+
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": answer,
+        "confidence": confidence
+    })
