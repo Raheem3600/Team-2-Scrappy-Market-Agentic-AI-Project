@@ -54,6 +54,8 @@ class InvestigationState(BaseModel):
 
     current_data_context: Optional[Dict[str, Any]] = None
 
+    final_answer: Optional[str] = None
+
     def update_timestamp(self):
         self.updated_at = datetime.utcnow()
 
