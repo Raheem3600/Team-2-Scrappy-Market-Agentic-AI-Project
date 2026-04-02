@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.models.request_models import QueryRequest
 from app.models.response_models import QueryResponse
-from app.services.query_services import execute_safe_query
+from app.services.query_service import execute_safe_query
 
 router = APIRouter(prefix="/query", tags=["Query"])
 
