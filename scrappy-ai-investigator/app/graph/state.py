@@ -16,6 +16,9 @@ class IntentModel(BaseModel):
     time_range: str
     comparison: Optional[str] = None
     filters: Optional[Dict[str, Any]] = {}
+    query_type: str | None = None
+    entity: dict | None = None
+    product: str | None = None
 
 
 class HypothesisModel(BaseModel):
