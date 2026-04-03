@@ -7,17 +7,21 @@ class PlannerAgent(BaseAgent):
     name = "PlannerAgent"
 
     def execute(self, state):
+
+        # Skip for direct queries
+        if state.intent.query_type == "direct":
+            state.hypotheses = []
+            return state
+
         metric = state.intent.metric
 
         if metric not in HYPOTHESIS_REGISTRY:
-            raise Exception(f"No hypotheses defined for metric: {metric}")
+            state.hypotheses = []
+            return state
 
-        hypotheses_config = HYPOTHESIS_REGISTRY[metric]
-
-        # Clear old hypotheses (important for re-runs)
         state.hypotheses = []
 
-        for h in hypotheses_config:
+        for h in HYPOTHESIS_REGISTRY[metric]:
             state.add_hypothesis(
                 HypothesisModel(
                     name=h["name"],
@@ -26,10 +30,8 @@ class PlannerAgent(BaseAgent):
                 )
             )
 
-        # Sort by priority
-        state.hypotheses = sorted(
-            state.hypotheses,
-            key=lambda x: x.priority
-        )
+        state.hypotheses = sorted(state.hypotheses, key=lambda x: x.priority)
+
+        print(f"[PlannerAgent] Generated hypotheses: {[h.name for h in state.hypotheses]}")
 
         return state
