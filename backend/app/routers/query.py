@@ -11,7 +11,11 @@ def execute_query(request: QueryRequest):
     try:
         results = execute_safe_query(
             view_name=request.view_name,
+            metric_column=request.metric_column,
             filters=request.filters,
+            order_by=request.order_by,
+            aggregation=request.aggregation,
+            group_by=request.group_by,
             limit=request.limit
         )
 
