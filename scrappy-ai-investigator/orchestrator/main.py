@@ -24,7 +24,7 @@ def investigate(payload: dict):
 
     return {
         "answer": result["final_answer"],
-        "confidence": result["confidence"],
+        # "confidence": result["confidence"],
         "hypotheses": [h.model_dump() for h in result["hypotheses"]],
         "evidence": [e.model_dump() for e in result["evidence"]]
     }
