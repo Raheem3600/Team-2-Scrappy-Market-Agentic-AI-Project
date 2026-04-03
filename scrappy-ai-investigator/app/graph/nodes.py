@@ -35,13 +35,25 @@ def select_hypothesis_node(state):
     return state
 
 def evaluate_node(state):
+
+    # DIRECT / ANALYTICAL → skip loop
+    if state.intent.query_type in ["direct", "analytical"]:
+        state.confidence = 1.0
+        return state
+
+    # INVESTIGATIVE FLOW
+    if not state.hypotheses:
+        return state
+
+    #  SAFE INDEX
+    if state.current_hypothesis_index >= len(state.hypotheses):
+        return state
+
     current = state.hypotheses[state.current_hypothesis_index]
-    current.score = 0.6
 
-    state.confidence = 0.6
+    current.tested = True
 
-    # Move index forward HERE (safe)
+    #  MOVE FORWARD
     state.current_hypothesis_index += 1
 
-    state.update_timestamp()
     return state
