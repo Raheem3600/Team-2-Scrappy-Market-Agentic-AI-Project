@@ -1,28 +1,58 @@
 from app.agents.base import BaseAgent
-from app.domain.lineage import LINEAGE_REGISTRY
 
 
 class LineageAgent(BaseAgent):
     name = "LineageAgent"
 
     def execute(self, state):
-        idx = state.current_hypothesis_index
 
-        if idx >= len(state.hypotheses):
-            return state
+        metric = state.intent.metric
+        query_type = state.intent.query_type
+        entity = state.intent.entity
 
-        hypothesis = state.hypotheses[idx].name
+        # -----------------------------------
+        # 1. METRIC → COLUMN MAPPING
+        # -----------------------------------
+        if metric == "units_sold":
+            metric_column = "UnitsSold"
+        else:
+            metric_column = "SalesAmount"
 
-        if hypothesis not in LINEAGE_REGISTRY:
-            raise Exception(f"No lineage mapping for {hypothesis}")
+        # -----------------------------------
+        # 2. VIEW SELECTION LOGIC
+        # -----------------------------------
 
-        mapping = LINEAGE_REGISTRY[hypothesis]
+        #  DIRECT QUERIES (aggregates)
+        if query_type == "direct":
+            view = "vw_sales_enriched"
 
+        #  ANALYTICAL (ranking/grouping)
+        elif query_type == "analytical":
+
+            if entity and entity.get("type") == "store":
+                view = "vw_sales_daily_store"
+
+            elif entity and entity.get("type") == "region":
+                view = "vw_sales_daily_store"
+
+            elif state.intent.product:
+                view = "vw_sales_daily_product"
+
+            else:
+                view = "vw_sales_daily_store"  # fallback
+
+        #  INVESTIGATIVE
+        else:
+            view = "vw_sales_daily_store"
+
+        # -----------------------------------
+        # 3. BUILD CONTEXT
+        # -----------------------------------
         state.current_data_context = {
-            "view": mapping["view"],
-            "group_by": mapping["group_by"],
-            "metrics": mapping["metrics"]
+            "view": view,
+            "metric_column": metric_column
         }
 
-        state.update_timestamp()
+        print(f"[LineageAgent] Context: {state.current_data_context}")
+
         return state
