@@ -15,12 +15,29 @@ lineage_agent = LineageAgent()
 query_agent = QueryBuilderAgent()
 evaluation_agent = EvaluationAgent()
 
-def route_after_planner(state: InvestigationState):
+def route_after_planner(state):
+
+    #  DIRECT → go to query
+    if state.intent.query_type == "direct":
+        return "lineage"
+
+    # INVESTIGATIVE → normal flow
     if len(state.hypotheses) == 0:
         return "response"
+
     return "select_hypothesis"
 
 def route_after_evaluation(state):
+
+    #  DIRECT → done
+    if state.intent.query_type == "direct":
+        return "response"
+
+    #  ANALYTICAL → done (NO LOOP)
+    if state.intent.query_type == "analytical":
+        return "response"
+
+    #  INVESTIGATIVE FLOW
     CONFIDENCE_THRESHOLD = 0.75
 
     if state.confidence and state.confidence >= CONFIDENCE_THRESHOLD:
@@ -30,6 +47,11 @@ def route_after_evaluation(state):
         return "response"
 
     return "select_hypothesis"
+
+def route_after_intent(state):
+    if state.intent.query_type == "casual":
+        return "response"
+    return "planner"
 
 
 def build_graph():
@@ -48,7 +70,10 @@ def build_graph():
     builder.set_entry_point("intent")
 
     # Linear start
-    builder.add_edge("intent", "planner")
+    builder.add_conditional_edges(
+        "intent",
+        route_after_intent
+    )
 
     # Conditional after planner
     builder.add_conditional_edges(
