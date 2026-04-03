@@ -1,11 +1,19 @@
 from app.agents.base import BaseAgent
-from app.graph.state import InvestigationState
 
 
 class EvaluationAgent(BaseAgent):
-    name = "EvaluationAgent"   # ✅ set class attribute
+    name = "EvaluationAgent"
 
-    def execute(self, state: InvestigationState):
+    def execute(self, state):
+
+        # DIRECT → no evaluation needed
+        if state.intent.query_type == "direct":
+            state.confidence = 1.0
+            return state
+
+        if not state.hypotheses:
+            state.confidence = 0.0
+            return state
 
         current_index = max(state.current_hypothesis_index - 1, 0)
 
@@ -14,7 +22,6 @@ class EvaluationAgent(BaseAgent):
 
         hypothesis = state.hypotheses[current_index]
 
-        # Find matching evidence
         evidence = next(
             (e for e in reversed(state.evidence) if e.hypothesis == hypothesis.name),
             None
@@ -23,19 +30,14 @@ class EvaluationAgent(BaseAgent):
         if not evidence or not evidence.raw_data:
             score = 0.1
         else:
-            row_count = len(evidence.raw_data)
-
-            if row_count > 5:
-                score = 0.8
-            elif row_count > 2:
-                score = 0.6
-            else:
-                score = 0.3
+            score = 0.8
 
         hypothesis.score = score
         hypothesis.tested = True
 
-        scores = [h.score for h in state.hypotheses if h.score is not None]
-        state.confidence = max(scores) if scores else 0.0
+        state.confidence = max(
+            [h.score for h in state.hypotheses if h.score is not None],
+            default=0.0
+        )
 
         return state
