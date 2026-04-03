@@ -12,7 +12,7 @@ ALLOWED_VIEWS = {
 VIEW_COLUMNS = {
     "vw_sales_daily_store": {
         "DateKey", "StoreID", "StoreName", "Channel",
-        "TotalSalesAmount", "TotalQuantitySold", "TransactionCount", "Region", "UnitsSold"
+        "TotalSalesAmount", "TotalQuantitySold", "TransactionCount", "Region", "UnitsSold", "SalesAmount"
     },
     "vw_low_stock": {
         "StoreID", "StoreName", "ProductID", "ProductName",
@@ -69,7 +69,7 @@ def execute_safe_query(
     params = []
 
     # ==============================
-    # SELECT CLAUSE
+    # 🔥 SELECT CLAUSE
     # ==============================
     if aggregation:
         if group_by:
@@ -80,7 +80,7 @@ def execute_safe_query(
         sql = f"SELECT TOP {int(limit)} * FROM dbo.{view_name}"
 
     # ==============================
-    # WHERE CLAUSE
+    # 🔥 WHERE CLAUSE
     # ==============================
     if filters:
         conditions = []
@@ -94,13 +94,13 @@ def execute_safe_query(
             sql += " WHERE " + " AND ".join(conditions)
 
     # ==============================
-    #  GROUP BY
+    # 🔥 GROUP BY
     # ==============================
     if aggregation and group_by:
         sql += f" GROUP BY {group_by}"
 
     # ==============================
-    # ORDER BY
+    # 🔥 ORDER BY
     # ==============================
     if aggregation:
         if order_by:
