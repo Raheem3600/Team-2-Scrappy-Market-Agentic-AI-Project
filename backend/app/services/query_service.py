@@ -12,7 +12,7 @@ ALLOWED_VIEWS = {
 VIEW_COLUMNS = {
     "vw_sales_daily_store": {
         "DateKey", "StoreID", "StoreName", "Channel",
-        "TotalSalesAmount", "TotalQuantitySold", "TransactionCount", "Region"
+        "TotalSalesAmount", "TotalQuantitySold", "TransactionCount", "Region", "UnitsSold"
     },
     "vw_low_stock": {
         "StoreID", "StoreName", "ProductID", "ProductName",
@@ -22,7 +22,7 @@ VIEW_COLUMNS = {
         "SalesID", "DateKey", "StoreID", "StoreName", "Region", "City",
         "ProductID", "ProductName", "Category", "QuantitySold",
         "SalesAmount", "UnitPrice", "PromotionID", "PromotionName",
-        "DiscountPct", "Channel", "WasOnPromotion"
+        "DiscountPct", "Channel", "WasOnPromotion", "UnitsSold"
     },
     "vw_promotions_enriched": {
         "PromotionID", "PromotionName", "DiscountPct",
@@ -30,7 +30,7 @@ VIEW_COLUMNS = {
     },
     "vw_sales_daily_product": {
         "DateKey", "ProductID", "ProductName", "Category",
-        "TotalSalesAmount", "TotalQuantitySold"
+        "TotalSalesAmount", "TotalQuantitySold", "UnitsSold"
     },
     "vw_promo_sales_fact": {
         "SalesID", "DateKey", "StoreID", "ProductID", "PromotionID",
@@ -39,25 +39,77 @@ VIEW_COLUMNS = {
 }
 
 
-def execute_safe_query(view_name: str, filters: dict, limit: int):
+def execute_safe_query(
+    view_name: str,
+    metric_column: str,
+    filters: dict,
+    order_by: str | None,
+    limit: int,
+    aggregation: str | None = None,
+    group_by: str | None = None,
+):
     if view_name not in ALLOWED_VIEWS:
         raise ValueError(f"View '{view_name}' is not allowed.")
 
     valid_columns = VIEW_COLUMNS.get(view_name, set())
 
+    # Validate filters
     for column in filters.keys():
         if column not in valid_columns:
             raise ValueError(f"Invalid filter column '{column}' for view '{view_name}'.")
 
-    sql = f"SELECT TOP {int(limit)} * FROM dbo.{view_name}"
+    # Validate group_by
+    if group_by and group_by not in valid_columns:
+        raise ValueError(f"Invalid group_by column '{group_by}'.")
+
+    # Validate metric column
+    if metric_column not in valid_columns:
+        raise ValueError(f"Invalid metric column '{metric_column}'.")
+
     params = []
 
+    # ==============================
+    # SELECT CLAUSE
+    # ==============================
+    if aggregation:
+        if group_by:
+            sql = f"SELECT TOP {int(limit)} {group_by}, {aggregation}({metric_column}) AS value FROM dbo.{view_name}"
+        else:
+            sql = f"SELECT {aggregation}({metric_column}) AS value FROM dbo.{view_name}"
+    else:
+        sql = f"SELECT TOP {int(limit)} * FROM dbo.{view_name}"
+
+    # ==============================
+    # WHERE CLAUSE
+    # ==============================
     if filters:
         conditions = []
         for column, value in filters.items():
+            if value is None:
+                continue  # 🔥 skip NULL filters
             conditions.append(f"{column} = ?")
             params.append(value)
 
-        sql += " WHERE " + " AND ".join(conditions)
+        if conditions:
+            sql += " WHERE " + " AND ".join(conditions)
+
+    # ==============================
+    #  GROUP BY
+    # ==============================
+    if aggregation and group_by:
+        sql += f" GROUP BY {group_by}"
+
+    # ==============================
+    # ORDER BY
+    # ==============================
+    if aggregation:
+        if order_by:
+            sql += f" ORDER BY value {order_by}"
+    else:
+        if order_by:
+            sql += f" ORDER BY {metric_column} {order_by}"
+
+    print(f"[QueryService] Executing SQL: {sql}")
+    print(f"[QueryService] Params: {params}")
 
     return execute_select_query(sql, params)
