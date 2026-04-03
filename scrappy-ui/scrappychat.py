@@ -98,7 +98,7 @@ if user_input:
 
     with st.chat_message("assistant"):
         response = st.write_stream(stream_response(answer))
-        st.caption(f"Confidence: {round(confidence, 2)}")
+        #st.caption(f"Confidence: {round(confidence, 2)}")
 
     st.session_state.messages.append({
         "role": "assistant",
