@@ -8,27 +8,31 @@ import re
 
 
 # ----------------------------------------
-#  CASUAL DETECTION
+# 🟡 CASUAL DETECTION
 # ----------------------------------------
 def detect_casual_intent(question: str):
     q = question.lower().strip()
 
     casual_patterns = [
-        "hi", "hello", "hey", "good morning",
-        "good evening", "how are you",
-        "what's up", "who are you"
+        "hi", "hello", "hey",
+        "good morning", "good evening",
+        "how are you",
+        "what's up",
+        "who are you"
     ]
 
-    if any(p in q for p in casual_patterns):
-        return IntentModel(
-            metric="none",
-            time_range="none",
-            comparison=None,
-            filters={},
-            query_type="casual",
-            entity=None,
-            product=None
-        )
+    for pattern in casual_patterns:
+        # match whole words only
+        if re.search(rf"\b{re.escape(pattern)}\b", q):
+            return IntentModel(
+                metric="none",
+                time_range="none",
+                comparison=None,
+                filters={},
+                query_type="casual",
+                entity=None,
+                product=None
+            )
 
     return None
 
@@ -130,7 +134,7 @@ class IntentAgent(BaseAgent):
     def execute(self, state):
 
         # ----------------------------------------
-        #  STEP 1: CASUAL SHORT-CIRCUIT
+        # 🟡 STEP 1: CASUAL SHORT-CIRCUIT
         # ----------------------------------------
         casual_intent = detect_casual_intent(state.question)
         if casual_intent:
@@ -143,12 +147,49 @@ class IntentAgent(BaseAgent):
             return state
 
         # ----------------------------------------
-        #  STEP 2: LLM INTENT
+        # 🟢 STEP 2: LLM INTENT
         # ----------------------------------------
         llm = get_llm()
 
-        system_prompt = """You are a strict JSON generator for analytics intent.
-Return ONLY valid JSON. No explanation."""
+        system_prompt = """
+        You are a strict JSON generator.
+
+        Extract structured analytics intent.
+
+        Return ONLY valid JSON.
+
+        Do NOT explain.
+        Do NOT add text.
+        Do NOT wrap in markdown.
+
+        Format:
+        {
+        "metric": string,
+        "time_range": string,
+        "comparison": string | null,
+        "filters": object
+        }
+
+        Examples:
+
+        Q: Why did sales drop last week?
+        A:
+        {
+        "metric": "net_sales",
+        "time_range": "last_7_days",
+        "comparison": "previous_period",
+        "filters": {}
+        }
+
+        Q: Show revenue yesterday
+        A:
+        {
+        "metric": "revenue",
+        "time_range": "yesterday",
+        "comparison": null,
+        "filters": {}
+        }
+        """
 
         user_prompt = f"User question:\n{state.question}"
 
