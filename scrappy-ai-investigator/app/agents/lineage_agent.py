@@ -22,11 +22,11 @@ class LineageAgent(BaseAgent):
         # 2. VIEW SELECTION LOGIC
         # -----------------------------------
 
-        #  DIRECT QUERIES (aggregates)
+        # ✅ DIRECT QUERIES (aggregates)
         if query_type == "direct":
             view = "vw_sales_enriched"
 
-        #  ANALYTICAL (ranking/grouping)
+        # ✅ ANALYTICAL (ranking/grouping)
         elif query_type == "analytical":
 
             if entity and entity.get("type") == "store":
@@ -41,7 +41,7 @@ class LineageAgent(BaseAgent):
             else:
                 view = "vw_sales_daily_store"  # fallback
 
-        #  INVESTIGATIVE
+        # ✅ INVESTIGATIVE
         else:
             view = "vw_sales_daily_store"
 

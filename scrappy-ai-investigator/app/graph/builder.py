@@ -17,7 +17,7 @@ evaluation_agent = EvaluationAgent()
 
 def route_after_planner(state):
 
-    #  DIRECT → go to query
+    # 🔥 DIRECT → go to query
     if state.intent.query_type == "direct":
         return "lineage"
 
@@ -29,15 +29,15 @@ def route_after_planner(state):
 
 def route_after_evaluation(state):
 
-    #  DIRECT → done
+    # 🔥 DIRECT → done
     if state.intent.query_type == "direct":
         return "response"
 
-    #  ANALYTICAL → done (NO LOOP)
+    # 🔥 ANALYTICAL → done (NO LOOP)
     if state.intent.query_type == "analytical":
         return "response"
 
-    #  INVESTIGATIVE FLOW
+    # 🔴 INVESTIGATIVE FLOW
     CONFIDENCE_THRESHOLD = 0.75
 
     if state.confidence and state.confidence >= CONFIDENCE_THRESHOLD:

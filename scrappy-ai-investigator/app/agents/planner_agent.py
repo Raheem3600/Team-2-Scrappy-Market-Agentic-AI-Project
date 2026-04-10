@@ -8,7 +8,7 @@ class PlannerAgent(BaseAgent):
 
     def execute(self, state):
 
-        # Skip for direct queries
+        # 🔥 Skip for direct queries
         if state.intent.query_type == "direct":
             state.hypotheses = []
             return state

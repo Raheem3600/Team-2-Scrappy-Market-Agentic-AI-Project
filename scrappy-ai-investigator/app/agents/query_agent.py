@@ -19,7 +19,7 @@ class QueryBuilderAgent(BaseAgent):
         query_type = state.intent.query_type
 
         # ==============================
-        #  DEFAULT PAYLOAD
+        # 🔥 DEFAULT PAYLOAD
         # ==============================
 
         metric_column = context.get("metric_column", "SalesAmount")
@@ -35,13 +35,13 @@ class QueryBuilderAgent(BaseAgent):
         }
 
         # ==============================
-        #  DIRECT QUERY (SUM)
+        # 🟢 DIRECT QUERY (SUM)
         # ==============================
         if query_type == "direct":
             payload["aggregation"] = "SUM"
 
         # ==============================
-        #  ANALYTICAL QUERY (GROUP + ORDER)
+        # 🔵 ANALYTICAL QUERY (GROUP + ORDER)
         # ==============================
         elif query_type == "analytical":
 
@@ -56,7 +56,7 @@ class QueryBuilderAgent(BaseAgent):
             })
 
         # ==============================
-        # INVESTIGATIVE (SAFE DEFAULT)
+        # 🔴 INVESTIGATIVE (SAFE DEFAULT)
         # ==============================
         else:
             payload["limit"] = 50  # avoid huge data 
@@ -88,7 +88,7 @@ class QueryBuilderAgent(BaseAgent):
         return state
 
     # ==============================
-    #  HELPERS
+    # 🧠 HELPERS
     # ==============================
 
     def _build_filters(self, state):

@@ -45,7 +45,7 @@ def evaluate_node(state):
     if not state.hypotheses:
         return state
 
-    #  SAFE INDEX
+    # ✅ SAFE INDEX
     if state.current_hypothesis_index >= len(state.hypotheses):
         return state
 
@@ -53,7 +53,7 @@ def evaluate_node(state):
 
     current.tested = True
 
-    #  MOVE FORWARD
+    # 🔥 MOVE FORWARD
     state.current_hypothesis_index += 1
 
     return state

@@ -13,7 +13,7 @@ class ResponseAgent(BaseAgent):
         data = state.evidence[-1].raw_data if state.evidence else []
 
         # ==============================
-        #  NO DATA
+        # ❌ NO DATA
         # ==============================
         print(state.intent.query_type)
         if not data:
@@ -27,7 +27,7 @@ class ResponseAgent(BaseAgent):
         row = data[0]
 
         # ==============================
-        #  SAFE VALUE EXTRACTION
+        # 🔥 SAFE VALUE EXTRACTION
         # ==============================
         value = (
             row.get("value")
@@ -52,7 +52,7 @@ class ResponseAgent(BaseAgent):
                     continue
 
         # ==============================
-        #  DIRECT QUERY
+        # 🟢 DIRECT QUERY
         # ==============================
         if state.intent.query_type == "direct":
             state.final_answer = f"Total {state.intent.metric} = {value}"
@@ -60,7 +60,7 @@ class ResponseAgent(BaseAgent):
             return state
 
         # ==============================
-        # ANALYTICAL QUERY
+        # 🔵 ANALYTICAL QUERY
         # ==============================
         if state.intent.query_type == "analytical":
 
@@ -88,7 +88,7 @@ class ResponseAgent(BaseAgent):
             return state
 
         # ==============================
-        #  INVESTIGATIVE → LLM
+        # 🔴 INVESTIGATIVE → LLM
         # ==============================
         system_prompt = """
         You are a senior retail data analyst.

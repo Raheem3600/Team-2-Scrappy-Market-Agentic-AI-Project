@@ -78,7 +78,6 @@ if user_input:
             res = requests.post(
                 API_URL,
                 json={"question": user_input},
-                timeout=60
             )
             data = res.json()
             answer = data.get("answer", "No response")

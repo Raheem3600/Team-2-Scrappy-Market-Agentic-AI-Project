@@ -4,6 +4,8 @@ from datetime import datetime
 from enum import Enum
 
 
+
+
 class InvestigationStatus(str, Enum):
     STARTED = "started"
     IN_PROGRESS = "in_progress"
@@ -69,4 +71,3 @@ class InvestigationState(BaseModel):
     def add_evidence(self, evidence: EvidenceModel):
         self.evidence.append(evidence)
         self.update_timestamp()
-
