@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException
 from app.models.request_models import QueryRequest
 from app.models.response_models import QueryResponse
 from app.services.query_service import execute_safe_query
+from app.models.analysis_models import AnalysisRequest
+from app.services.analytics_service import execute_analysis
 
 router = APIRouter(prefix="/query", tags=["Query"])
 
@@ -21,6 +23,23 @@ def execute_query(request: QueryRequest):
 
         return {
             "success": True,
+            "row_count": len(results),
+            "results": results
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/analyze")
+def analyze_query(request: AnalysisRequest):
+    try:
+        results = execute_analysis(request)
+
+        return {
+            "success": True,
+            "analysis_type": request.analysis_type,
             "row_count": len(results),
             "results": results
         }
