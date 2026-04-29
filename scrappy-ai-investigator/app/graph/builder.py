@@ -18,10 +18,15 @@ evaluation_agent = EvaluationAgent()
 def route_after_planner(state):
 
     # 🔥 DIRECT → go to query
+    # direct → query
     if state.intent.query_type == "direct":
         return "lineage"
 
-    # INVESTIGATIVE → normal flow
+    # analytical → query
+    if state.intent.query_type == "analytical":
+        return "lineage"
+
+    # investigative → hypotheses required
     if len(state.hypotheses) == 0:
         return "response"
 

@@ -33,6 +33,62 @@ class ResponseAgent(BaseAgent):
         
         limit = state.intent.filters.get("limit", 1)
 
+        # promotion impact comparison
+        if state.intent.comparison == "promotion_impact":
+
+            data = state.evidence[-1].raw_data if state.evidence else []
+
+            if len(data) < 2:
+                state.final_answer = "Not enough data to compare promotions."
+                state.status = "completed"
+                return state
+
+            promo_sales = None
+            non_promo_sales = None
+
+            for row in data:
+                if row.get("WasOnPromotion") in [True, 1]:
+                    promo_sales = (
+                        row.get("TotalSalesAmount")
+                        or row.get("TotalUnitsSold")
+                        or row.get("SalesAmount")
+                        or row.get("UnitsSold")
+                        or row.get("value")
+                    )
+
+                else:
+                    non_promo_sales = (
+                        row.get("TotalSalesAmount")
+                        or row.get("TotalUnitsSold")
+                        or row.get("SalesAmount")
+                        or row.get("UnitsSold")
+                        or row.get("value")
+                    )
+
+            if promo_sales is None or non_promo_sales is None:
+                state.final_answer = "Promotion comparison data incomplete."
+                state.status = "completed"
+                return state
+
+            lift = round(
+                ((promo_sales - non_promo_sales) / non_promo_sales) * 100,
+                2
+            )
+
+            if lift > 0:
+                state.final_answer = (
+                    f"Yes. Promotions increased sales by {lift}% "
+                    f"({promo_sales} vs {non_promo_sales})."
+                )
+            else:
+                state.final_answer = (
+                    f"No. Promotions reduced sales by {abs(lift)}% "
+                    f"({promo_sales} vs {non_promo_sales})."
+                )
+
+            state.status = "completed"
+            return state
+
         if state.intent.query_type == "analytical" and limit > 1:
             lines = []
 

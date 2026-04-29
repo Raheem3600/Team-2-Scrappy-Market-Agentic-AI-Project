@@ -95,6 +95,10 @@ def safe_json_parse(text: str, question: str | None = None):
                 "per store"
             ]):
                 intent.query_type = "analytical"
+                
+            if "promotion" in question_lower or "promotions" in question_lower:
+                intent.query_type = "analytical"
+                intent.comparison = "promotion_impact"
 
             # ----------------------------------------
             # METRIC OVERRIDE

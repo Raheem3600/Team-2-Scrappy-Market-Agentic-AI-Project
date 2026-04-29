@@ -60,6 +60,17 @@ class QueryBuilderAgent(BaseAgent):
                 "sort_direction": order
             }
 
+            if state.intent.comparison == "promotion_impact":
+                payload = {
+                    "analysis_type": "promotion_comparison",
+                    "view_name": context["view"],
+                    "group_by": ["WasOnPromotion"],
+                    "metrics": ["UnitsSold"],
+                    "filters": {},
+                    "aggregation": "AVG",
+                    "limit": 2
+                }
+
         # ==============================
         # 🔴 INVESTIGATIVE (SAFE DEFAULT)
         # ==============================
@@ -90,7 +101,8 @@ class QueryBuilderAgent(BaseAgent):
 
         state.current_query = {
             "sql": sql,
-            "params": params
+            "params": params,
+            "payload": payload
         }
 
         state.add_evidence(
@@ -114,16 +126,18 @@ class QueryBuilderAgent(BaseAgent):
 
         raw_filters = state.intent.filters or {}
 
-        allowed_filter_columns = {
-            "StoreID",
-            "Region",
-            "ProductName",
-            "Category"
+        column_map = {
+            "storeid": "StoreID",
+            "region": "Region",
+            "productname": "ProductName",
+            "category": "Category"
         }
 
         for k, v in raw_filters.items():
-            if k in allowed_filter_columns and v is not None:
-                filters[k] = v
+            normalized = column_map.get(k.lower())
+
+            if normalized and v is not None:
+                filters[normalized] = v
 
         return filters
 
@@ -137,17 +151,13 @@ class QueryBuilderAgent(BaseAgent):
         return "unknown"
 
     def _detect_grouping(self, state):
-        """
-        Decide GROUP BY column
-        """
 
+        filters = state.intent.filters or {}
         question = state.question.lower()
 
-        if "store" in question:
-            return "StoreID"
-
-        if "region" in question:
-            return "Region"
+        # if region is already a filter, don't group by it
+        if "region" in filters and "product" in question:
+            return "ProductID"
 
         if "product" in question:
             return "ProductID"
@@ -155,7 +165,12 @@ class QueryBuilderAgent(BaseAgent):
         if "category" in question:
             return "Category"
 
-        # fallback
+        if "store" in question:
+            return "StoreID"
+
+        if "region" in question:
+            return "Region"
+
         return "StoreID"
 
     def _detect_order(self, state):

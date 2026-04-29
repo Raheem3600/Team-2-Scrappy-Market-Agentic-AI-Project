@@ -108,7 +108,15 @@ if user_input:
         st.caption(f"Confidence: {round(confidence, 2)}")
 
         with st.expander("View Query Used"):
-            st.code(query_used.get("sql", ""), language="sql")
+            sql_preview = query_used.get("sql", "")
+            params = query_used.get("params", [])
+
+            for param in params:
+                sql_preview = sql_preview.replace("?", f"'{param}'", 1)
+
+            st.code(sql_preview, language="sql")
+        with st.expander("View Parameters Used"):
+            st.code(str(query_used.get("payload", {})), language="json")
 
     st.session_state.messages.append({
         "role": "assistant",

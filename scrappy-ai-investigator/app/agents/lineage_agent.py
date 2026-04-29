@@ -21,17 +21,35 @@ class LineageAgent(BaseAgent):
         # ✅ ANALYTICAL (ranking/grouping)
         elif query_type == "analytical":
 
-            if entity and entity.get("type") == "store":
+            filters = state.intent.filters or {}
+            question = state.question.lower()
+
+            # promotion impact analysis
+            if state.intent.comparison == "promotion_impact":
+                view = "vw_sales_enriched"
+            
+            # explicit store analytics
+            elif entity and entity.get("type") == "store":
                 view = "vw_sales_daily_store"
 
+            # explicit regional analytics
             elif entity and entity.get("type") == "region":
                 view = "vw_sales_daily_store"
 
-            elif state.intent.product or "product" in state.question.lower():
-                view = "vw_sales_daily_product"
+            # product analytics
+            elif "product" in question:
+                # if filtering by region/store/category,
+                # use enriched fact view (supports multidimensional filtering)
+                if any(
+                    key.lower() in {"region", "storeid", "category"}
+                    for key in filters.keys()
+                ):
+                    view = "vw_sales_enriched"
+                else:
+                    view = "vw_sales_daily_product"
 
             else:
-                view = "vw_sales_daily_store"  # fallback
+                view = "vw_sales_daily_store"
 
         # ✅ INVESTIGATIVE
         else:
