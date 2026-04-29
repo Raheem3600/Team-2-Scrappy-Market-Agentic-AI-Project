@@ -160,4 +160,8 @@ def execute_analysis(request):
             else:
                 results[i]["YoYChangePct"] = None
 
-    return results
+    return {
+        "results": results,
+        "sql": sql,
+        "params": params
+    }

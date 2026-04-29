@@ -112,4 +112,10 @@ def execute_safe_query(
     print(f"[QueryService] Executing SQL: {sql}")
     print(f"[QueryService] Params: {params}")
 
-    return execute_select_query(sql, params)
+    results = execute_select_query(sql, params)
+
+    return {
+        "results": results,
+        "sql": sql,
+        "params": params
+    }

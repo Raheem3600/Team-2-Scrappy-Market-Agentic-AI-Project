@@ -11,7 +11,7 @@ router = APIRouter(prefix="/query", tags=["Query"])
 @router.post("/execute", response_model=QueryResponse)
 def execute_query(request: QueryRequest):
     try:
-        results = execute_safe_query(
+        query_result = execute_safe_query(
             view_name=request.view_name,
             metric_column=request.metric_column,
             filters=request.filters,
@@ -20,11 +20,16 @@ def execute_query(request: QueryRequest):
             group_by=request.group_by,
             limit=request.limit
         )
+        results = query_result["results"]
+        sql = query_result["sql"]
+        params = query_result["params"]
 
         return {
             "success": True,
             "row_count": len(results),
-            "results": results
+            "results": results,
+            "sql": sql,
+            "params": params
         }
 
     except ValueError as e:
@@ -35,13 +40,17 @@ def execute_query(request: QueryRequest):
 @router.post("/analyze")
 def analyze_query(request: AnalysisRequest):
     try:
-        results = execute_analysis(request)
+        query_result = execute_analysis(request)
+        results = query_result["results"]
+        sql = query_result["sql"]
+        params = query_result["params"]
 
         return {
             "success": True,
-            "analysis_type": request.analysis_type,
             "row_count": len(results),
-            "results": results
+            "results": results,
+            "sql": sql,
+            "params": params
         }
 
     except ValueError as e:

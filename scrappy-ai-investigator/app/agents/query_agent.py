@@ -68,8 +68,6 @@ class QueryBuilderAgent(BaseAgent):
 
         print("📡 Query Payload:", payload)
 
-        state.current_query = payload.copy()
-
         endpoint = "http://localhost:8000/query/execute"
 
         if query_type == "analytical":
@@ -85,7 +83,15 @@ class QueryBuilderAgent(BaseAgent):
             raise Exception(f"API Error: {response.text}")
 
         result = response.json()
+
         data = result.get("results", [])
+        sql = result.get("sql", "")
+        params = result.get("params", [])
+
+        state.current_query = {
+            "sql": sql,
+            "params": params
+        }
 
         state.add_evidence(
             EvidenceModel(

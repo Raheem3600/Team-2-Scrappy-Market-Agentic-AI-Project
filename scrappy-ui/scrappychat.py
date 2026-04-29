@@ -108,7 +108,7 @@ if user_input:
         st.caption(f"Confidence: {round(confidence, 2)}")
 
         with st.expander("View Query Used"):
-            st.json(query_used)
+            st.code(query_used.get("sql", ""), language="sql")
 
     st.session_state.messages.append({
         "role": "assistant",
