@@ -1,0 +1,18 @@
+# Ignore virtual environments anywhere in the repo
+venv/
+**/venv/
+
+# Common alternative names
+.venv/
+**/.venv/
+
+env/
+**/env/
+
+ENV/
+**/ENV/
+
+**/__pycache__/
+**/*.pyc
+
+.env

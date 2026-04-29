@@ -10,6 +10,7 @@ graph = build_graph()
 
 @app.post("/investigate")
 def investigate(payload: dict):
+    CONFIDENCE_THRESHOLD = 0.50
     question = payload.get("question")
 
     state = InvestigationState(
@@ -24,7 +25,8 @@ def investigate(payload: dict):
 
     return {
         "answer": result["final_answer"],
-        # "confidence": result["confidence"],
+        "confidence": result.get("confidence", 0),
+        "query": result.get("current_query", {}),
         "hypotheses": [h.model_dump() for h in result["hypotheses"]],
         "evidence": [e.model_dump() for e in result["evidence"]]
     }

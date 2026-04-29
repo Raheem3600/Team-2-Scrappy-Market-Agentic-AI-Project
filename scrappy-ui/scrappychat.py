@@ -72,6 +72,10 @@ if user_input:
         "content": user_input
     })
 
+    answer = "No response"
+    confidence = 0
+    query_used = {}
+
     # Call Orchestrator API
     with st.spinner("Analyzing..."):
         try:
@@ -80,8 +84,12 @@ if user_input:
                 json={"question": user_input},
             )
             data = res.json()
+            print("API Response:", data)
+            print("Confidence field:", data.get("confidence"))
+            print("Type:", type(data.get("confidence")))
             answer = data.get("answer", "No response")
             confidence = data.get("confidence", 0)
+            query_used = data.get("query", {})
 
         except Exception as e:
             answer = f"Error: {str(e)}"
@@ -97,7 +105,10 @@ if user_input:
 
     with st.chat_message("assistant"):
         response = st.write_stream(stream_response(answer))
-        #st.caption(f"Confidence: {round(confidence, 2)}")
+        st.caption(f"Confidence: {round(confidence, 2)}")
+
+        with st.expander("View Query Used"):
+            st.json(query_used)
 
     st.session_state.messages.append({
         "role": "assistant",

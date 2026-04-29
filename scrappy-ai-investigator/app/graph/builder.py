@@ -29,24 +29,56 @@ def route_after_planner(state):
 
 def route_after_evaluation(state):
 
-    # 🔥 DIRECT → done
+    # direct → done
     if state.intent.query_type == "direct":
         return "response"
 
-    # 🔥 ANALYTICAL → done (NO LOOP)
+    # analytical → done
     if state.intent.query_type == "analytical":
         return "response"
 
-    # 🔴 INVESTIGATIVE FLOW
+    # investigative → confidence loop
     CONFIDENCE_THRESHOLD = 0.75
 
-    if state.confidence and state.confidence >= CONFIDENCE_THRESHOLD:
+    if state.confidence >= CONFIDENCE_THRESHOLD:
         return "response"
 
-    if state.current_hypothesis_index >= len(state.hypotheses):
+    if state.current_hypothesis_index + 1 >= len(state.hypotheses):
         return "response"
 
+    state.current_hypothesis_index += 1
     return "select_hypothesis"
+
+# def route_after_evaluation(state):
+
+#     print("Confidence:", state.confidence)
+#     print("Current hypothesis index:", state.current_hypothesis_index)
+#     print("Total hypotheses:", len(state.hypotheses))
+
+#     if state.intent.query_type == "direct":
+#         print("ROUTE -> response (direct)")
+#         return "response"
+
+#     if state.intent.query_type == "analytical":
+#         print("ROUTE -> response (analytical)")
+#         return "response"
+
+#     CONFIDENCE_THRESHOLD = 0.75
+
+#     if state.confidence and state.confidence >= CONFIDENCE_THRESHOLD:
+#         print("ROUTE -> response (confidence met)")
+#         return "response"
+
+#     if state.current_hypothesis_index + 1 >= len(state.hypotheses):
+#         print("ROUTE -> response (no hypotheses left)")
+#         return "response"
+
+#     state.current_hypothesis_index += 1
+
+#     print("ROUTE -> select_hypothesis")
+#     print("Next hypothesis index:", state.current_hypothesis_index)
+
+#     return "select_hypothesis"
 
 def route_after_intent(state):
     if state.intent.query_type == "casual":
@@ -63,7 +95,7 @@ def build_graph():
     builder.add_node("select_hypothesis", select_hypothesis_node)
     builder.add_node("lineage", lineage_agent)
     builder.add_node("query", query_agent)
-    builder.add_node("evaluate", evaluate_node)
+    builder.add_node("evaluate", evaluation_agent)
     builder.add_node("response", response_agent)
 
     # Entry

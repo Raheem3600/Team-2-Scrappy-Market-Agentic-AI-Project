@@ -31,6 +31,7 @@ class PlannerAgent(BaseAgent):
             )
 
         state.hypotheses = sorted(state.hypotheses, key=lambda x: x.priority)
+        state.current_hypothesis_index = 0
 
         print(f"[PlannerAgent] Generated hypotheses: {[h.name for h in state.hypotheses]}")
 

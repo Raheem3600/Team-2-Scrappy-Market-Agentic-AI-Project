@@ -22,10 +22,9 @@ class QueryBuilderAgent(BaseAgent):
         # 🔥 DEFAULT PAYLOAD
         # ==============================
 
-        metric_column = context.get("metric_column", "SalesAmount")
+        metric_column = context.get("metric_column")
 
-        # fallback safety
-        if metric_column not in ["SalesAmount", "UnitsSold"]:
+        if not metric_column:
             metric_column = "SalesAmount"
 
         payload = {
@@ -33,6 +32,9 @@ class QueryBuilderAgent(BaseAgent):
             "metric_column": metric_column,
             "filters": filters
         }
+
+        
+
 
         # ==============================
         # 🟢 DIRECT QUERY (SUM)
@@ -48,12 +50,15 @@ class QueryBuilderAgent(BaseAgent):
             group_by = self._detect_grouping(state)
             order = self._detect_order(state)
 
-            payload.update({
-                "aggregation": "SUM",
-                "group_by": group_by,
-                "order_by": order,
-                "limit": 1
-            })
+            payload = {
+                "analysis_type": "top_n",
+                "view_name": context["view"],
+                "group_by": [group_by],     # must be list
+                "metrics": [metric_column], # must be list
+                "filters": filters,
+                "limit": state.intent.filters.get("limit", 1),
+                "sort_direction": order
+            }
 
         # ==============================
         # 🔴 INVESTIGATIVE (SAFE DEFAULT)
@@ -63,8 +68,15 @@ class QueryBuilderAgent(BaseAgent):
 
         print("📡 Query Payload:", payload)
 
+        state.current_query = payload.copy()
+
+        endpoint = "http://localhost:8000/query/execute"
+
+        if query_type == "analytical":
+            endpoint = "http://localhost:8000/query/analyze"
+
         response = requests.post(
-            "http://localhost:8000/query/execute",
+            endpoint,
             json=payload,
             timeout=30
         )
@@ -96,8 +108,15 @@ class QueryBuilderAgent(BaseAgent):
 
         raw_filters = state.intent.filters or {}
 
+        allowed_filter_columns = {
+            "StoreID",
+            "Region",
+            "ProductName",
+            "Category"
+        }
+
         for k, v in raw_filters.items():
-            if v is not None:
+            if k in allowed_filter_columns and v is not None:
                 filters[k] = v
 
         return filters
@@ -106,8 +125,8 @@ class QueryBuilderAgent(BaseAgent):
         if state.intent.query_type == "direct":
             return "direct_query"
 
-        if state.current_hypothesis_index > 0:
-            return state.hypotheses[state.current_hypothesis_index - 1].name
+        if state.hypotheses and state.current_hypothesis_index < len(state.hypotheses):
+            return state.hypotheses[state.current_hypothesis_index].name
 
         return "unknown"
 

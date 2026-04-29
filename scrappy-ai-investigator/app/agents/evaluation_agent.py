@@ -15,7 +15,7 @@ class EvaluationAgent(BaseAgent):
             state.confidence = 0.0
             return state
 
-        current_index = max(state.current_hypothesis_index - 1, 0)
+        current_index = state.current_hypothesis_index
 
         if current_index >= len(state.hypotheses):
             return state
@@ -28,9 +28,20 @@ class EvaluationAgent(BaseAgent):
         )
 
         if not evidence or not evidence.raw_data:
-            score = 0.1
+            score = 0.0
+
         else:
-            score = 0.8
+            row_count = len(evidence.raw_data)
+
+            # richer scoring
+            if row_count == 0:
+                score = 0.0
+            elif row_count < 3:
+                score = 0.4
+            elif row_count < 10:
+                score = 0.7
+            else:
+                score = 0.9
 
         hypothesis.score = score
         hypothesis.tested = True

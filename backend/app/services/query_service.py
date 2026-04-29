@@ -12,7 +12,7 @@ ALLOWED_VIEWS = {
 VIEW_COLUMNS = {
     "vw_sales_daily_store": {
         "DateKey", "StoreID", "StoreName", "Channel",
-        "TotalSalesAmount", "TotalQuantitySold", "TransactionCount", "Region", "UnitsSold", "SalesAmount"
+        "SalesAmount", "TotalQuantitySold", "TransactionCount", "Region", "UnitsSold", "SalesAmount"
     },
     "vw_low_stock": {
         "StoreID", "StoreName", "ProductID", "ProductName",

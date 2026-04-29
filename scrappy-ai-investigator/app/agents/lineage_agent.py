@@ -11,14 +11,6 @@ class LineageAgent(BaseAgent):
         entity = state.intent.entity
 
         # -----------------------------------
-        # 1. METRIC → COLUMN MAPPING
-        # -----------------------------------
-        if metric == "units_sold":
-            metric_column = "UnitsSold"
-        else:
-            metric_column = "SalesAmount"
-
-        # -----------------------------------
         # 2. VIEW SELECTION LOGIC
         # -----------------------------------
 
@@ -35,7 +27,7 @@ class LineageAgent(BaseAgent):
             elif entity and entity.get("type") == "region":
                 view = "vw_sales_daily_store"
 
-            elif state.intent.product:
+            elif state.intent.product or "product" in state.question.lower():
                 view = "vw_sales_daily_product"
 
             else:
@@ -44,6 +36,28 @@ class LineageAgent(BaseAgent):
         # ✅ INVESTIGATIVE
         else:
             view = "vw_sales_daily_store"
+
+        # -----------------------------------
+        # 1. METRIC → COLUMN MAPPING
+        # -----------------------------------
+        if view == "vw_sales_daily_product":
+            if metric == "units_sold":
+                metric_column = "UnitsSold"
+            else:
+                metric_column = "SalesAmount"
+
+        elif view == "vw_sales_daily_store":
+            if metric == "units_sold":
+                metric_column = "UnitsSold"
+            else:
+                metric_column = "SalesAmount"
+
+        else:
+            if metric == "units_sold":
+                metric_column = "UnitsSold"
+            else:
+                metric_column = "SalesAmount"
+        
 
         # -----------------------------------
         # 3. BUILD CONTEXT

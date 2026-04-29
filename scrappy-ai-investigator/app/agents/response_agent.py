@@ -11,6 +11,13 @@ class ResponseAgent(BaseAgent):
     def execute(self, state):
 
         data = state.evidence[-1].raw_data if state.evidence else []
+        if state.intent.query_type == "investigative" and state.confidence < 0.5:
+            state.final_answer = (
+                f"Low confidence ({state.confidence:.2f}). "
+                "Insufficient evidence to determine the root cause."
+            )
+            state.status = "completed"
+            return state
 
         # ==============================
         # ❌ NO DATA
@@ -23,16 +30,52 @@ class ResponseAgent(BaseAgent):
                 state.final_answer = "No data available"
             state.status = "completed"
             return state
+        
+        limit = state.intent.filters.get("limit", 1)
 
+        if state.intent.query_type == "analytical" and limit > 1:
+            lines = []
+
+            for idx, row in enumerate(data, start=1):
+                product = row.get("ProductID")
+                store = row.get("StoreID")
+                region = row.get("Region")
+
+                value = (
+                    row.get("value")
+                    or row.get("SalesAmount")
+                    or row.get("TotalSalesAmount")
+                    or row.get("UnitsSold")
+                )
+
+                entity = (
+                    f"Product {product}" if product else
+                    f"Store {store}" if store else
+                    f"Region {region}" if region else
+                    "Result"
+                )
+
+                lines.append(f"{idx}. {entity} → {value}")
+
+            state.final_answer = (
+                f"Top {limit} results by {state.intent.metric}:\n\n" +
+                "\n".join(lines)
+            )
+
+            state.status = "completed"
+            return state
+        
         row = data[0]
 
         # ==============================
-        # 🔥 SAFE VALUE EXTRACTION
+        #  SAFE VALUE EXTRACTION
         # ==============================
         value = (
             row.get("value")
             or row.get("SalesAmount")
+            or row.get("TotalSalesAmount")
             or row.get("UnitsSold")
+            or row.get("TotalUnitsSold")
         )
 
         # Convert string → float if needed

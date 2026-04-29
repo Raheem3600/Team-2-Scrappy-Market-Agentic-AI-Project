@@ -51,6 +51,25 @@ def safe_json_parse(text: str, question: str | None = None):
 
         intent = IntentModel(**parsed)
 
+
+        # remove LLM control/instruction keys from filters
+        reserved_keys = {
+            "breakdown",
+            "breakdown_by",
+            "group_by",
+            "sort_by",
+            "order_by",
+            "analysis_type",
+            "metric",
+            "top_n",
+            "limit"
+        }
+
+        intent.filters = {
+            k: v for k, v in (intent.filters or {}).items()
+            if k not in reserved_keys
+        }
+
         if question:
             question_lower = question.lower()
 
@@ -65,7 +84,15 @@ def safe_json_parse(text: str, question: str | None = None):
 
             if any(w in question_lower for w in [
                 "highest", "lowest", "top", "best", "worst",
-                "max", "min", "most", "least"
+                "max", "min", "most", "least",
+                "breakdown",
+                "different",
+                "across",
+                "by region",
+                "by store",
+                "by product",
+                "per region",
+                "per store"
             ]):
                 intent.query_type = "analytical"
 
@@ -98,7 +125,13 @@ def safe_json_parse(text: str, question: str | None = None):
             # ----------------------------------------
             # PRODUCT EXTRACTION
             # ----------------------------------------
-            product_match = re.search(r"product\s*([a-zA-Z0-9_ ]+)", question_lower)
+            if "products" in question_lower:
+                product_match = None
+            else:
+                product_match = re.search(
+                    r"\bproduct\s+([a-zA-Z0-9_]+)\b",
+                    question_lower
+                )
             if product_match:
                 intent.product = product_match.group(1).strip()
 

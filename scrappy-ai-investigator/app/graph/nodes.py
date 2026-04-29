@@ -27,11 +27,12 @@ def response_node(state: InvestigationState):
 
 def select_hypothesis_node(state):
     if state.current_hypothesis_index >= len(state.hypotheses):
-        return state  # No more hypotheses
+        return state
 
-    current = state.hypotheses[state.current_hypothesis_index]
-    current.tested = True
-    state.update_timestamp()
+    hypothesis = state.hypotheses[state.current_hypothesis_index]
+
+    print(f"Testing hypothesis: {hypothesis.name}")
+
     return state
 
 def evaluate_node(state):
@@ -53,7 +54,5 @@ def evaluate_node(state):
 
     current.tested = True
 
-    # 🔥 MOVE FORWARD
-    state.current_hypothesis_index += 1
 
     return state

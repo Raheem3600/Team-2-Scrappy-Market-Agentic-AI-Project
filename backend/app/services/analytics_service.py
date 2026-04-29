@@ -11,6 +11,9 @@ ALLOWED_ANALYSIS_TYPES = {
 
 ALLOWED_VIEWS = {
     "vw_sales_enriched",
+    "vw_sales_daily_store",
+    "vw_sales_daily_product",
+    "vw_promo_sales_fact",
 }
 
 VALID_COLUMNS = {
@@ -30,6 +33,22 @@ VALID_COLUMNS = {
         "Month",
         "Quarter",
         "Date",
+    },
+    "vw_sales_daily_product": {
+        "DateKey",
+        "ProductID",
+        "ProductName",
+        "Category",
+        "SalesAmount",
+        "UnitsSold"
+    },
+    "vw_sales_daily_store": {
+        "DateKey",
+        "StoreID",
+        "StoreName",
+        "Region",
+        "SalesAmount",
+        "UnitsSold"
     }
 }
 

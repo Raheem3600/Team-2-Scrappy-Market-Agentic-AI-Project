@@ -58,6 +58,7 @@ class InvestigationState(BaseModel):
     current_hypothesis_index: int = 0
 
     current_data_context: Optional[Dict[str, Any]] = None
+    current_query: Optional[Dict[str, Any]] = None
 
     final_answer: Optional[str] = None
 
