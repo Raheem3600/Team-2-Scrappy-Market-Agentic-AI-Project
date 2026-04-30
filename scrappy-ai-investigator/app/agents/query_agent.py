@@ -1,6 +1,11 @@
+import os
 import requests
 from app.agents.base import BaseAgent
 from app.graph.state import EvidenceModel
+
+
+DATA_API_BASE_URL = os.getenv("DATA_API_BASE_URL", "http://localhost:8000/query")
+HTTP_SESSION = requests.Session()
 
 
 class QueryBuilderAgent(BaseAgent):
@@ -79,12 +84,12 @@ class QueryBuilderAgent(BaseAgent):
 
         print("📡 Query Payload:", payload)
 
-        endpoint = "http://localhost:8000/query/execute"
+        endpoint = f"{DATA_API_BASE_URL}/execute"
 
         if query_type == "analytical":
-            endpoint = "http://localhost:8000/query/analyze"
+            endpoint = f"{DATA_API_BASE_URL}/analyze"
 
-        response = requests.post(
+        response = HTTP_SESSION.post(
             endpoint,
             json=payload,
             timeout=30
@@ -154,6 +159,18 @@ class QueryBuilderAgent(BaseAgent):
 
         filters = state.intent.filters or {}
         question = state.question.lower()
+
+        if "month" in question:
+            return "MonthName"
+
+        if "quarter" in question:
+            return "Quarter"
+
+        if "year" in question:
+            return "Year"
+
+        if "day" in question:
+            return "DayName"
 
         # if region is already a filter, don't group by it
         if "region" in filters and "product" in question:

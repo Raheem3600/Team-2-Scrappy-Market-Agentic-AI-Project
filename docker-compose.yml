@@ -1,0 +1,75 @@
+name: scrappymarket-final-v2
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: scrappymarket_final_v2_db
+    hostname: scrappymarket-final-v2-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${DB_PASSWORD:-IT7993!Scrappy}"
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./db:/db
+      - ./docker/init-db.sh:/init-db.sh
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\" >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+    command: /bin/bash -c "/init-db.sh & /opt/mssql/bin/sqlservr"
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    container_name: scrappymarket_final_v2_backend
+    environment:
+      DB_SERVER: "${DB_SERVER:-db,1433}"
+      DB_NAME: "${DB_NAME:-ScrappyMarket}"
+      DB_USER: "${DB_USER:-sa}"
+      DB_PASSWORD: "${DB_PASSWORD:-IT7993!Scrappy}"
+      ODBC_DRIVER: "${ODBC_DRIVER:-ODBC Driver 18 for SQL Server}"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  investigator:
+    build:
+      context: ./scrappy-ai-investigator
+    container_name: scrappymarket_final_v2_investigator
+    environment:
+      DATA_API_BASE_URL: "${DATA_API_BASE_URL:-http://backend:8000/query}"
+      OLLAMA_BASE_URL: "${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-llama3}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "9000:9000"
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: ./scrappy-ui
+    container_name: scrappymarket_final_v2_ui
+    environment:
+      ORCHESTRATOR_URL: "${ORCHESTRATOR_URL:-http://investigator:9000/investigate}"
+    depends_on:
+      - investigator
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
