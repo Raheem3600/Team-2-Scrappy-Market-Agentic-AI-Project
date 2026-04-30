@@ -1,8 +1,9 @@
 import streamlit as st
 import requests
-import time
+import os
 
-API_URL = "http://localhost:9000/investigate"
+API_URL = os.getenv("ORCHESTRATOR_URL", "http://localhost:9000/investigate")
+HTTP_SESSION = requests.Session()
 
 # -------------------------------
 # PAGE CONFIG
@@ -79,7 +80,7 @@ if user_input:
     # Call Orchestrator API
     with st.spinner("Analyzing..."):
         try:
-            res = requests.post(
+            res = HTTP_SESSION.post(
                 API_URL,
                 json={"question": user_input},
             )
@@ -101,7 +102,6 @@ if user_input:
     def stream_response(text):
         for word in text.split():
             yield word + " "
-            time.sleep(0.03)
 
     with st.chat_message("assistant"):
         response = st.write_stream(stream_response(answer))

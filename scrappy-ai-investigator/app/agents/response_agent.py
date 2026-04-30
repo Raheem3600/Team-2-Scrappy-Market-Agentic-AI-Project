@@ -93,9 +93,6 @@ class ResponseAgent(BaseAgent):
             lines = []
 
             for idx, row in enumerate(data, start=1):
-                product = row.get("ProductID")
-                store = row.get("StoreID")
-                region = row.get("Region")
 
                 value = (
                     row.get("value")
@@ -104,12 +101,7 @@ class ResponseAgent(BaseAgent):
                     or row.get("UnitsSold")
                 )
 
-                entity = (
-                    f"Product {product}" if product else
-                    f"Store {store}" if store else
-                    f"Region {region}" if region else
-                    "Result"
-                )
+                entity = self._format_analytical_entity(row)
 
                 lines.append(f"{idx}. {entity} → {value}")
 
@@ -162,21 +154,8 @@ class ResponseAgent(BaseAgent):
         # 🔵 ANALYTICAL QUERY
         # ==============================
         if state.intent.query_type == "analytical":
-
-            store = row.get("StoreID")
-            region = row.get("Region")
-            product = row.get("ProductID")
-            category = row.get("Category")
-
-            entity = (
-                f"Store {store}" if store else
-                f"Region {region}" if region else
-                f"Product {product}" if product else
-                f"Category {category}" if category else
-                "Result"
-            )
-
-            comparison = state.intent.comparison or "lowest"
+            entity = self._format_analytical_entity(row)
+            comparison = self._detect_analytical_comparison(state)
 
             if comparison in ["lowest", "least", "worst"]:
                 state.final_answer = f"{entity} has the lowest {state.intent.metric}: {value}"
@@ -340,3 +319,53 @@ class ResponseAgent(BaseAgent):
         state.status = "completed"
 
         return state
+
+    def _format_analytical_entity(self, row):
+        month_name = row.get("MonthName")
+        day_name = row.get("DayName")
+        quarter = row.get("Quarter")
+        year = row.get("Year")
+        store = row.get("StoreID")
+        region = row.get("Region")
+        product = row.get("ProductID")
+        category = row.get("Category")
+
+        return (
+            f"Month {month_name}" if month_name else
+            f"Day {day_name}" if day_name else
+            f"Quarter {quarter}" if quarter else
+            f"Year {year}" if year else
+            f"Store {store}" if store else
+            f"Region {region}" if region else
+            f"Product {product}" if product else
+            f"Category {category}" if category else
+            "Result"
+        )
+
+    def _detect_analytical_comparison(self, state):
+        comparison = state.intent.comparison
+
+        if comparison in {"lowest", "least", "worst"}:
+            return "lowest"
+
+        if comparison in {"highest", "top", "best"}:
+            return "highest"
+
+        payload = state.current_query.get("payload", {}) if state.current_query else {}
+        sort_direction = str(payload.get("sort_direction", "")).upper()
+
+        if sort_direction == "ASC":
+            return "lowest"
+
+        if sort_direction == "DESC":
+            return "highest"
+
+        question = state.question.lower()
+
+        if any(word in question for word in ["lowest", "least", "worst", "min"]):
+            return "lowest"
+
+        if any(word in question for word in ["highest", "top", "best", "most", "max"]):
+            return "highest"
+
+        return "highest"

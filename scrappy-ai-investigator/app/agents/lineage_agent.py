@@ -23,9 +23,14 @@ class LineageAgent(BaseAgent):
 
             filters = state.intent.filters or {}
             question = state.question.lower()
+            time_grain_terms = ("month", "quarter", "year", "day")
 
             # promotion impact analysis
             if state.intent.comparison == "promotion_impact":
+                view = "vw_sales_enriched"
+
+            # time-based analytics need the enriched time dimensions
+            elif any(term in question for term in time_grain_terms):
                 view = "vw_sales_enriched"
             
             # explicit store analytics

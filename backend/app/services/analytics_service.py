@@ -31,7 +31,9 @@ VALID_COLUMNS = {
         "WasOnPromotion",
         "Year",
         "Month",
+        "MonthName",
         "Quarter",
+        "DayName",
         "Date",
     },
     "vw_sales_daily_product": {
