@@ -46,6 +46,8 @@ def safe_json_parse(text: str, question: str | None = None):
         # ----------------------------------------
         try:
             parsed["metric"] = canonicalize_metric(parsed["metric"])
+            if parsed["metric"] in ["top_products", "top_stores", "top_regions"]:
+                parsed["metric"] = "net_sales"
         except:
             parsed["metric"] = parsed.get("metric", "net_sales").lower()
 
@@ -83,8 +85,6 @@ def safe_json_parse(text: str, question: str | None = None):
                 intent.query_type = "investigative"
 
             if any(w in question_lower for w in [
-                "highest", "lowest", "top", "best", "worst",
-                "max", "min", "most", "least",
                 "breakdown",
                 "different",
                 "across",
@@ -95,7 +95,16 @@ def safe_json_parse(text: str, question: str | None = None):
                 "per store"
             ]):
                 intent.query_type = "analytical"
+                intent.comparison = "breakdown"
+
+            # ranking queries
+            elif any(w in question_lower for w in [
+                "highest", "lowest", "top", "best", "worst",
+                "max", "min", "most", "least"
+            ]):
+                intent.query_type = "analytical"
                 
+
             if "promotion" in question_lower or "promotions" in question_lower:
                 intent.query_type = "analytical"
                 intent.comparison = "promotion_impact"

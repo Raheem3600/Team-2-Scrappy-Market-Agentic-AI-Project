@@ -50,13 +50,23 @@ class QueryBuilderAgent(BaseAgent):
             group_by = self._detect_grouping(state)
             order = self._detect_order(state)
 
+            state.current_query_dimension = group_by
+
+            analysis_type = "top_n"
+            limit = state.intent.filters.get("limit", 1)
+
+            # breakdown queries should return all grouped rows
+            if state.intent.comparison == "breakdown":
+                analysis_type = "breakdown"
+                limit = 100
+
             payload = {
-                "analysis_type": "top_n",
+                "analysis_type": analysis_type,
                 "view_name": context["view"],
-                "group_by": [group_by],     # must be list
-                "metrics": [metric_column], # must be list
+                "group_by": [group_by],
+                "metrics": [metric_column],
                 "filters": filters,
-                "limit": state.intent.filters.get("limit", 1),
+                "limit": limit,
                 "sort_direction": order
             }
 

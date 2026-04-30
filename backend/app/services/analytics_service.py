@@ -3,6 +3,7 @@ from app.services.db_service import execute_select_query
 
 ALLOWED_ANALYSIS_TYPES = {
     "region_breakdown",
+    "breakdown",
     "top_n",
     "promotion_comparison",
     "month_over_month",

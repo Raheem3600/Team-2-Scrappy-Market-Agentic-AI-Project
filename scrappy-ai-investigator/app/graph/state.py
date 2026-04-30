@@ -59,6 +59,7 @@ class InvestigationState(BaseModel):
 
     current_data_context: Optional[Dict[str, Any]] = None
     current_query: Optional[Dict[str, Any]] = None
+    current_query_dimension: Optional[str] = None
 
     final_answer: Optional[str] = None
 

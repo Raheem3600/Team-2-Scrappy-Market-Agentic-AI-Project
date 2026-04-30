@@ -11,6 +11,15 @@ class EvaluationAgent(BaseAgent):
             state.confidence = 1.0
             return state
 
+        if state.intent.query_type == "analytical":
+
+            if state.evidence and len(state.evidence[-1].raw_data) > 0:
+                state.confidence = 0.8
+            else:
+                state.confidence = 0.0
+
+            return state
+
         if not state.hypotheses:
             state.confidence = 0.0
             return state

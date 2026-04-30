@@ -89,6 +89,47 @@ class ResponseAgent(BaseAgent):
             state.status = "completed"
             return state
 
+        if state.intent.comparison == "breakdown":
+
+            data = state.evidence[-1].raw_data if state.evidence else []
+
+            if not data:
+                state.final_answer = "No data available"
+                state.status = "completed"
+                return state
+
+            lines = []
+
+            for row in data:
+                region = row.get("Region")
+                store = row.get("StoreID")
+                category = row.get("Category")
+
+                value = (
+                    row.get("value")
+                    or row.get("SalesAmount")
+                    or row.get("TotalSalesAmount")
+                    or row.get("UnitsSold")
+                    or row.get("TotalUnitsSold")
+                )
+
+                label = (
+                    region
+                    or category
+                    or f"Store {store}"
+                    or "Unknown"
+                )
+
+                lines.append(f"- {label}: {value}")
+
+            state.final_answer = (
+                f"Sales breakdown by {state.current_query_dimension}:\n\n"
+                + "\n".join(lines)
+            )
+
+            state.status = "completed"
+            return state
+
         if state.intent.query_type == "analytical" and limit > 1:
             lines = []
 
