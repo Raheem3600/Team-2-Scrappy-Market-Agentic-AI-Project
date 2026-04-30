@@ -37,4 +37,3 @@ Run `docker compose down --remove-orphans` in the project folder.
 
 - Ollama runs locally on the host machine and is not inside Docker.
 - The first Docker startup may take a few minutes while containers build.
-- If Docker volumes are removed, the database may need to be recreated on the next startup.
