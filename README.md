@@ -10,7 +10,7 @@
 
 1. Open a terminal.
 2. Start Ollama on your computer.
-3. Run `ollama pull llama3`.
+3. In the terminal run `ollama pull llama3` to pull the local AI model our project uses.
 
 ## Start the Application
 
